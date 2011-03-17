@@ -1,0 +1,3 @@
+Simulating Communicating Systems
+
+Implementation: In Ruby, using callcc and closures (Proc) - Great Fun but slow
