@@ -6,13 +6,13 @@ require 'system'
 
 class ActorA < Actor
   attr_reader :timeout, :retries
-  def initialize(actorid, timeout, retries, system)
+  def initialize(actorid, timeout, max_attempts, system)
     super(actorid, system)
-    @timeout, @retries, @received = timeout, retries, {}
+    @timeout, @max_attempts, @received = timeout, max_attempts, {}
   end
   def sendMessage(msgid, receiver)
     trace(:request, "Send Request Message #{msgid}")
-    (@retries + 1).times do |i|
+    @max_attempts.times do |i|
       request = Message.new(self, receiver, msgid)
       @system.send(request)
       trace(:send, "Send Message #{msgid}, retry #{i}")
@@ -41,7 +41,7 @@ end
 
 # demo
 puts "#{"-"*78}\nUsage Info: ruby demo.rb <demo = 0> <runs = 3> (demo \\in {0,1})\n#{"-"*78}"
-demo, runs = (ARGV[0] || 0), (ARGV[1] || 3)
+demo, runs = (ARGV[0] || 0).to_i, (ARGV[1] || 3).to_i
 $TRACE = runs < 10
 
 sys = System.new
@@ -49,12 +49,14 @@ actA, actB = nil, nil
 
 if demo == 0
   # Simulation of Exercise 1
+  # ------------------------
   actA = ActorA.new(1, 11, 10, sys) # timeout > max_delay(1->2) + max_delay(2->1) !! 
   actB = ActorB.new(2, sys)
   sys.channels[ [1,2] ] = LossyChannel.new(5, 0.5, sys)
   sys.channels[ [2,1] ] = LossyChannel.new(5, 0.5, sys)
 else
   # Simulation of Exercise 2
+  # ------------------------
   magic_loss = 1/Math.sqrt(2) # 0.7071
   actA = ActorA.new(1, 11, 1000, sys) # timeout > max_delay(1->2) + max_delay(2->1) !! 
   actB = ActorB.new(2, sys)
